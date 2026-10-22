@@ -31,7 +31,9 @@ export function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  const [productoEditando, setProductoEditando] = useState<Product | null>(null);
+  const [productoEditando, setProductoEditando] = useState<Product | null>(
+    null,
+  );
   const [accionando, setAccionando] = useState<number | null>(null);
   const [accionError, setAccionError] = useState("");
 
@@ -115,7 +117,9 @@ export function ProductsPage() {
       setProducts((prev) => prev.map((p) => (p.id === data.id ? data : p)));
       setProductoEditando(null);
     } catch (err) {
-      setAccionError(obtenerMensajeError(err, "No se pudo editar el producto."));
+      setAccionError(
+        obtenerMensajeError(err, "No se pudo editar el producto."),
+      );
     } finally {
       setAccionando(null);
     }
@@ -257,10 +261,7 @@ export function ProductsPage() {
           aria-modal="true"
           onClick={() => setProductoEditando(null)}
         >
-          <section
-            className="admin-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <section className="admin-modal" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
               onClick={() => setProductoEditando(null)}
@@ -290,7 +291,6 @@ export function ProductsPage() {
               <label>
                 Nombre
                 <input
-
                   required
                   value={productoEditando.name}
                   onChange={(e) =>
@@ -299,13 +299,6 @@ export function ProductsPage() {
                       name: e.target.value,
                     })
                   }
-
-                  type="text"
-                  placeholder="Buscar por nombre y descripción..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400 font-medium"
-
                 />
               </label>
 
@@ -383,10 +376,7 @@ export function ProductsPage() {
               </label>
 
               <div className="admin-form-footer">
-                <button
-                  type="button"
-                  onClick={() => setProductoEditando(null)}
-                >
+                <button type="button" onClick={() => setProductoEditando(null)}>
                   Cancelar
                 </button>
                 <button
