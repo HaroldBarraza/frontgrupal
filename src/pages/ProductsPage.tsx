@@ -39,8 +39,8 @@ export function ProductsPage() {
   ];
 
   // Lógica de Filtrado Combinado (Buscador + Selector de Categoría)
+  const searchTermDebounce = useDebounce(searchTerm, 1000);
   const filteredProducts = products.filter((product) => {
-    const searchTermDebounce = useDebounce(searchTerm);
     const matchesSearch =
       product.name?.toLowerCase().includes(searchTermDebounce.toLowerCase()) ||
       product.description
@@ -115,7 +115,7 @@ export function ProductsPage() {
               <div className="relative w-full sm:w-72">
                 <input
                   type="text"
-                  placeholder="Buscar producto..."
+                  placeholder="Buscar por nombre y descripción..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full px-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400 font-medium"
