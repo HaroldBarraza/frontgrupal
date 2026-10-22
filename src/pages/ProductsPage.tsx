@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import api from "../libs/axios";
 import { ProductCard } from "../componentes/ProductCard";
 import type { Product } from "../types/Product";
+import useDebounce from "../hooks/useDebounce";
 
 export function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -39,14 +40,17 @@ export function ProductsPage() {
 
   // Lógica de Filtrado Combinado (Buscador + Selector de Categoría)
   const filteredProducts = products.filter((product) => {
+    const searchTermDebounce = useDebounce(searchTerm);
     const matchesSearch =
-      product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      product.name?.toLowerCase().includes(searchTermDebounce.toLowerCase()) ||
+      product.description
+        ?.toLowerCase()
+        .includes(searchTermDebounce.toLowerCase());
 
-    const matchesCategory = 
+    const matchesCategory =
       // selectedCategory === "all" || product.category === selectedCategory;
       product.category === "BeluPapeleria";
-      return matchesSearch && matchesCategory;
+    return matchesSearch && matchesCategory;
   });
 
   const handleAddToCart = (product: Product) => {
