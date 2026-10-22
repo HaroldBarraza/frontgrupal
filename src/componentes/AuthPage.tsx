@@ -20,7 +20,7 @@ export function AuthPage({ onCancel }: AuthPageProps) {
   const [modo, setModo] = useState<"Login" | "registro">("Login");
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setpasword] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [cargando, setCargando] = useState(false);
@@ -38,14 +38,12 @@ export function AuthPage({ onCancel }: AuthPageProps) {
     setMensaje("");
     try {
       if (modo === "registro") {
-        //POST para registrar
         await authService.register({ nombre, email, password });
         setMensaje("Registro completo, puedes iniciar sesión");
         setModo("Login");
         setNombre("");
-        setpasword("");
+        setPassword("");
       } else {
-        //POST para iniciar sesion, llamamos directamente al store donde se guarda el token
         await loginStore({ email, password });
       }
     } catch (err) {
@@ -63,61 +61,82 @@ export function AuthPage({ onCancel }: AuthPageProps) {
   };
 
   return (
-    <main className="auth-page" role="dialog" aria-modal="true">
-      <section className="auth-card">
-        {/* Botón opcional para cerrar o regresar */}
+    <div
+      className="modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      onClick={onCancel}
+    >
+      <section className="auth-modal" onClick={(e) => e.stopPropagation()}>
         {onCancel && (
-          <button type="button" className="auth-close" onClick={onCancel}>
-            Volver al catálogo
+          <button
+            type="button"
+            onClick={onCancel}
+            aria-label="Cerrar"
+            className="modal-close"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
+              <path d="m6 6 12 12M18 6 6 18" />
+            </svg>
           </button>
         )}
 
-        <p className="kicker">TIENDA ONLINE</p>
-        <h1>{modo === "Login" ? "Iniciar Sesión" : "Crear cuenta"}</h1>
-        <p className="auth-subtitle">
+        <div className="auth-mark">B</div>
+        <p className="eyebrow">TIENDA ONLINE</p>
+        <h2>{modo === "Login" ? "Iniciar sesión" : "Crear cuenta"}</h2>
+        <p>
           {modo === "Login"
-            ? "Accede a tu cuenta para ver mas información"
+            ? "Accede a tu cuenta para ver más información"
             : "Registrate para realizar tus compras"}
         </p>
 
-        {/* Pestañas para alternar entre Login y Registro */}
         <div className="auth-tabs" role="tablist" aria-label="Autenticación">
           <button
             type="button"
-            className={modo === "Login" ? "active" : ""}
+            role="tab"
+            aria-selected={modo === "Login"}
             onClick={() => cambiarModo("Login")}
+            className={modo === "Login" ? "active" : ""}
           >
             Iniciar sesión
           </button>
-
           <button
             type="button"
-            className={modo === "registro" ? "active" : ""}
+            role="tab"
+            aria-selected={modo === "registro"}
             onClick={() => cambiarModo("registro")}
+            className={modo === "registro" ? "active" : ""}
           >
             Registrarse
           </button>
         </div>
 
-        {/* Formulario principal */}
         <form className="auth-form" onSubmit={(e) => void handleSubmit(e)}>
-          {/* El campo Nombre solo se muestra en modo Registro */}
-
           {modo === "registro" && (
             <label>
               Nombre
               <input
+                className="auth-input"
                 required
                 value={nombre}
                 placeholder="Ingresa tu nombre"
                 onChange={(e) => setNombre(e.target.value)}
-              ></input>
+              />
             </label>
           )}
 
           <label>
             Email
             <input
+              className="auth-input"
               required
               type="email"
               value={email}
@@ -129,20 +148,24 @@ export function AuthPage({ onCancel }: AuthPageProps) {
           <label>
             Contraseña
             <input
+              className="auth-input"
               required
               minLength={6}
               type="password"
+              value={password}
               placeholder="Mínimo 6 caracteres"
-              onChange={(e) => setpasword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
             />
           </label>
 
-          {/* Mensajes de error o éxito */}
+          {error && <div className="alert-error">{error}</div>}
+          {mensaje && <div className="alert-success">{mensaje}</div>}
 
-          {error && <p className="feedback success">{mensaje}</p>}
-          {mensaje && <p className="feedback success">{mensaje} </p>}
-
-          <button className="button primary auth-submit" disabled={cargando}>
+          <button
+            type="submit"
+            className="primary-button full"
+            disabled={cargando}
+          >
             {cargando
               ? "Procesando..."
               : modo === "Login"
@@ -151,6 +174,6 @@ export function AuthPage({ onCancel }: AuthPageProps) {
           </button>
         </form>
       </section>
-    </main>
+    </div>
   );
 }

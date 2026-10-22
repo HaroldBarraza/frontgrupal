@@ -1,95 +1,104 @@
-import React from "react";
+import React, { useState } from "react";
 import type { Product } from "../types/Product";
+
+const PALETTE = ["coral", "lavender", "butter", "sky", "mint", "rose"] as const;
+const EMOJIS = ["✦", "✎", "✿", "▦", "✧", "♡"] as const;
 
 interface ProductCardProps {
   product: Product;
   onAddToCart?: (product: Product) => void;
+  esAdmin?: boolean;
+  onEditar?: () => void;
+  onEliminar?: () => void;
+  accionesDeshabilitadas?: boolean;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
   product,
   onAddToCart,
+  esAdmin = false,
+  onEditar,
+  onEliminar,
+  accionesDeshabilitadas = false,
 }) => {
   const { name, description, price, stock, category, image_url } = product;
+  const [imgFailed, setImgFailed] = useState(false);
 
-  // Formatear el nombre de la categoría (ej. "Panaderia-galleta" -> "Panaderia / galleta")
-  // Si category es null o undefined, usará un texto por defecto como 'General'
-  const formattedCategory = category ? category.replace("-", " / ") : "General";
-
-  // Validar si hay stock disponible
+  const formattedCategory = category ? category.replace(/-/g, " / ") : "General";
   const isOutOfStock = stock === 0;
+  const paletteIndex = Math.abs(product.id) % PALETTE.length;
+  const paletteClass = PALETTE[paletteIndex];
+  const emoji = EMOJIS[paletteIndex];
+  const showImage = !!image_url && !imgFailed;
 
   return (
-    <div className="max-w-sm rounded-2xl overflow-hidden shadow-lg bg-white border border-gray-100 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col h-full">
-      {/* Contenedor de la Imagen */}
-      <div className="relative aspect-square overflow-hidden bg-gray-50">
-        <img
-          className={`w-full h-full object-cover transition-transform duration-500 hover:scale-105 ${
-            isOutOfStock ? "grayscale opacity-75" : ""
-          }`}
-          // Si image_url es null o no existe, usa una imagen por defecto
-          src={image_url || "https://placehold.co"}
-          // Si name es null, evita romper el atributo alt usando un string vacío
-          alt={name || "Producto"}
-          loading="lazy"
-        />
+    <article className="product-card">
+      <div className={`product-image ${paletteClass}`}>
+        {showImage ? (
+          <img
+            src={image_url}
+            alt={name || "Producto"}
+            loading="lazy"
+            onError={() => setImgFailed(true)}
+          />
+        ) : (
+          <span className="product-placeholder">{emoji}</span>
+        )}
 
-        {/* Etiqueta de Categoría */}
-        <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-gray-700 text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm capitalize">
-          {formattedCategory}
-        </span>
+        <span className="product-category">{formattedCategory}</span>
 
-        {/* Alerta de Sin Stock */}
         {isOutOfStock && (
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-            <span className="bg-red-600 text-white font-bold text-sm px-4 py-2 rounded-lg uppercase tracking-wider">
-              Agotado
-            </span>
+          <div className="product-out-of-stock">
+            <span>Agotado</span>
           </div>
         )}
       </div>
 
-      {/* Contenido de la Card */}
-      <div className="p-5 flex flex-col flex-grow">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="text-lg font-bold text-gray-800 line-clamp-1">
-            {name}
-          </h3>
-          <span className="text-xl font-black text-indigo-600 whitespace-nowrap">
-            S/. {parseFloat(price).toFixed(2)}
-          </span>
-        </div>
-
-        <p className="text-gray-500 text-sm mb-4 line-clamp-2 flex-grow">
-          {description}
-        </p>
-
-        {/* Info de Stock y Botón de Acción */}
-        <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between gap-4">
-          <div className="flex flex-col">
-            <span className="text-xs text-gray-400 font-medium">
-              Disponibles
-            </span>
-            <span
-              className={`text-sm font-bold ${stock <= 5 ? "text-amber-500" : "text-gray-700"}`}
-            >
-              {stock} und.
-            </span>
-          </div>
-
-          <button
-            onClick={() => onAddToCart?.(product)}
-            disabled={isOutOfStock}
-            className={`flex-grow px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 text-center ${
-              isOutOfStock
-                ? "bg-gray-150 text-gray-400 cursor-not-allowed"
-                : "bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95 shadow-md shadow-indigo-100"
+      <div className="product-info">
+        <div>
+          <h3>{name}</h3>
+          <p>{description || "—"}</p>
+          <div
+            className={`product-stock ${
+              isOutOfStock ? "out" : stock <= 5 ? "low" : ""
             }`}
           >
-            Agregar
+            {isOutOfStock ? "Sin stock" : `${stock} disponibles`}
+          </div>
+        </div>
+        <strong>S/ {parseFloat(price).toFixed(2)}</strong>
+      </div>
+
+      {esAdmin ? (
+        <div className="product-actions">
+          <button
+            type="button"
+            onClick={onEditar}
+            disabled={accionesDeshabilitadas}
+            className="edit"
+          >
+            Editar
+          </button>
+          <button
+            type="button"
+            onClick={onEliminar}
+            disabled={accionesDeshabilitadas}
+            className="delete"
+          >
+            {accionesDeshabilitadas ? "..." : "Eliminar"}
           </button>
         </div>
-      </div>
-    </div>
+      ) : (
+        <div className="product-buy">
+          <button
+            type="button"
+            onClick={() => onAddToCart?.(product)}
+            disabled={isOutOfStock}
+          >
+            {isOutOfStock ? "Agotado" : "Agregar"}
+          </button>
+        </div>
+      )}
+    </article>
   );
 };
