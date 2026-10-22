@@ -4,6 +4,7 @@ import api from "../libs/axios";
 import { ProductCard } from "../componentes/ProductCard";
 import { useAuthStore } from "../store/useAuthStore";
 import type { Product } from "../types/Product";
+import useDebounce from "../hooks/useDebounce";
 
 const obtenerMensajeError = (error: unknown, mensajePorDefecto: string) => {
   if (axios.isAxiosError(error)) {
@@ -60,15 +61,18 @@ export function ProductsPage() {
   ];
 
   // Lógica de Filtrado Combinado (Buscador + Selector de Categoría)
+  const searchTermDebounce = useDebounce(searchTerm, 1000);
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
-      product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      product.name?.toLowerCase().includes(searchTermDebounce.toLowerCase()) ||
+      product.description
+        ?.toLowerCase()
+        .includes(searchTermDebounce.toLowerCase());
 
-    const matchesCategory = 
+    const matchesCategory =
       // selectedCategory === "all" || product.category === selectedCategory;
       product.category === "BeluPapeleria";
-      return matchesSearch && matchesCategory;
+    return matchesSearch && matchesCategory;
   });
 
   const handleAddToCart = (product: Product) => {
@@ -286,6 +290,7 @@ export function ProductsPage() {
               <label>
                 Nombre
                 <input
+
                   required
                   value={productoEditando.name}
                   onChange={(e) =>
@@ -294,6 +299,13 @@ export function ProductsPage() {
                       name: e.target.value,
                     })
                   }
+
+                  type="text"
+                  placeholder="Buscar por nombre y descripción..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400 font-medium"
+
                 />
               </label>
 
