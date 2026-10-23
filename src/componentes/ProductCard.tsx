@@ -8,6 +8,8 @@ interface ProductCardProps {
   product: Product;
   onAddToCart?: (product: Product) => void;
   esAdmin?: boolean;
+  onEditar?: () => void;
+  onEliminar?: () => void;
   accionesDeshabilitadas?: boolean;
 }
 
@@ -15,6 +17,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   product,
   onAddToCart,
   esAdmin = false,
+  onEditar,
+  onEliminar,
   accionesDeshabilitadas = false,
 }) => {
   const { name, description, price, stock, category, image_url } = product;
@@ -69,6 +73,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="product-actions">
           <button
             type="button"
+            onClick={onEditar}
             disabled={accionesDeshabilitadas}
             className="edit"
           >
@@ -76,6 +81,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </button>
           <button
             type="button"
+            onClick={onEliminar}
             disabled={accionesDeshabilitadas}
             className="delete"
           >

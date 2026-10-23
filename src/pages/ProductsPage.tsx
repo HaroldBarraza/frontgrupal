@@ -1,9 +1,24 @@
 import { useState, useEffect } from "react";
+import axios from "axios";
 import api from "../libs/axios";
 import { ProductCard } from "../componentes/ProductCard";
 import { useAuthStore } from "../store/useAuthStore";
 import type { Product } from "../types/Product";
 import useDebounce from "../hooks/useDebounce";
+
+const obtenerMensajeError = (error: unknown, mensajePorDefecto: string) => {
+  if (axios.isAxiosError(error)) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      return "Solo acceso al admin!";
+    }
+    const detalle = error.response?.data?.detail;
+    if (typeof detalle === "string") return detalle;
+  }
+  return mensajePorDefecto;
+};
+
+const inputClass =
+  "w-full px-3 py-2 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400 font-medium";
 
 export function ProductsPage() {
   const esAdmin = useAuthStore((s) => s.esAdmin());
@@ -15,6 +30,12 @@ export function ProductsPage() {
   // Estados para Filtros y Búsqueda
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+
+  const [productoEditando, setProductoEditando] = useState<Product | null>(
+    null,
+  );
+  const [accionando, setAccionando] = useState<number | null>(null);
+  const [accionError, setAccionError] = useState("");
 
   // Petición a la API con Axios
   const cargarProducts = () => {
@@ -58,6 +79,50 @@ export function ProductsPage() {
 
   const handleAddToCart = (product: Product) => {
     console.log(`Agregar al carrito: ${product.name}`);
+  };
+
+  const handleEliminar = async (id: number) => {
+    if (!window.confirm("¿Seguro que querés eliminar este producto?")) return;
+    try {
+      setAccionando(id);
+      setAccionError("");
+      await api.delete(`/products/${id}`);
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      setAccionError(
+        obtenerMensajeError(err, "No se pudo eliminar el producto."),
+      );
+    } finally {
+      setAccionando(null);
+    }
+  };
+
+  const handleEditarSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!productoEditando) return;
+    try {
+      setAccionando(productoEditando.id);
+      setAccionError("");
+      const { data } = await api.put<Product>(
+        `/products/${productoEditando.id}`,
+        {
+          name: productoEditando.name,
+          description: productoEditando.description,
+          price: productoEditando.price,
+          stock: productoEditando.stock,
+          category: productoEditando.category,
+          image_url: productoEditando.image_url,
+        },
+      );
+      setProducts((prev) => prev.map((p) => (p.id === data.id ? data : p)));
+      setProductoEditando(null);
+    } catch (err) {
+      setAccionError(
+        obtenerMensajeError(err, "No se pudo editar el producto."),
+      );
+    } finally {
+      setAccionando(null);
+    }
   };
 
   // 1. Renderizado en estado de Carga (Skeletons)
@@ -166,6 +231,8 @@ export function ProductsPage() {
         </div>
       </div>
 
+      {accionError && <div className="alert-error">{accionError}</div>}
+
       {/* Grid de Productos */}
       {filteredProducts.length === 0 ? (
         <div className="empty-block">
@@ -179,9 +246,150 @@ export function ProductsPage() {
               product={product}
               onAddToCart={handleAddToCart}
               esAdmin={esAdmin}
-              accionesDeshabilitadas={false}
+              onEditar={() => setProductoEditando({ ...product })}
+              onEliminar={() => void handleEliminar(product.id)}
+              accionesDeshabilitadas={accionando === product.id}
             />
           ))}
+        </div>
+      )}
+
+      {esAdmin && productoEditando && (
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setProductoEditando(null)}
+        >
+          <section className="admin-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setProductoEditando(null)}
+              aria-label="Cerrar"
+              className="modal-close"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <path d="m6 6 12 12M18 6 6 18" />
+              </svg>
+            </button>
+
+            <p className="eyebrow">MUTACIÓN PUT</p>
+            <h2>Editar: {productoEditando.name}</h2>
+
+            <form
+              onSubmit={(e) => void handleEditarSubmit(e)}
+              className="admin-form"
+            >
+              <label>
+                Nombre
+                <input
+                  required
+                  value={productoEditando.name}
+                  onChange={(e) =>
+                    setProductoEditando({
+                      ...productoEditando,
+                      name: e.target.value,
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                Categoría
+                <input
+                  value={productoEditando.category}
+                  onChange={(e) =>
+                    setProductoEditando({
+                      ...productoEditando,
+                      category: e.target.value,
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                Precio (S/.)
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  required
+                  value={productoEditando.price}
+                  onChange={(e) =>
+                    setProductoEditando({
+                      ...productoEditando,
+                      price: e.target.value,
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                Stock
+                <input
+                  type="number"
+                  min="0"
+                  required
+                  value={productoEditando.stock}
+                  onChange={(e) =>
+                    setProductoEditando({
+                      ...productoEditando,
+                      stock: Number(e.target.value),
+                    })
+                  }
+                />
+              </label>
+
+              <label className="full">
+                Descripción
+                <input
+                  value={productoEditando.description}
+                  onChange={(e) =>
+                    setProductoEditando({
+                      ...productoEditando,
+                      description: e.target.value,
+                    })
+                  }
+                />
+              </label>
+
+              <label className="full">
+                URL de imagen
+                <input
+                  type="url"
+                  value={productoEditando.image_url ?? ""}
+                  onChange={(e) =>
+                    setProductoEditando({
+                      ...productoEditando,
+                      image_url: e.target.value,
+                    })
+                  }
+                />
+              </label>
+
+              <div className="admin-form-footer">
+                <button type="button" onClick={() => setProductoEditando(null)}>
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={accionando === productoEditando.id}
+                >
+                  {accionando === productoEditando.id
+                    ? "Guardando..."
+                    : "Guardar cambios"}
+                </button>
+              </div>
+            </form>
+          </section>
         </div>
       )}
     </section>
