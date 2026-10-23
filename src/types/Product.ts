@@ -2,7 +2,7 @@ export interface Product {
   id: number;
   name: string;
   description: string;
-  price: string; // Viene como string en tu JSON ("8.00")
+  price: string;
   stock: number;
   category: string;
   image_url: string;
