@@ -5,6 +5,7 @@ import { ProductCard } from "../componentes/ProductCard";
 import { useAuthStore } from "../store/useAuthStore";
 import type { Product } from "../types/Product";
 import useDebounce from "../hooks/useDebounce";
+import PaginaReportes from "./PaginaReportes";
 
 const obtenerMensajeError = (error: unknown, mensajePorDefecto: string) => {
   if (axios.isAxiosError(error)) {
@@ -36,6 +37,9 @@ export function ProductsPage() {
   );
   const [accionando, setAccionando] = useState<number | null>(null);
   const [accionError, setAccionError] = useState("");
+
+  // Estado para controlar la inyección del gráfico por un modal
+  const [modalAbierto, setModalAbierto] = useState(false);
 
   // Petición a la API con Axios
   const cargarProducts = () => {
@@ -166,6 +170,28 @@ export function ProductsPage() {
           </p>
         </div>
 
+        <div className="modal-header">
+          {/* Botón único para abrir gráfico reporte emergente */}
+          <button
+            onClick={() => setModalAbierto(true)}
+            style={{
+              backgroundColor: "#E05A47",
+              color: "white",
+              padding: "10px 18px",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontWeight: "600",
+            }}
+          >
+            📊 Ver Gráfico de Reportes
+          </button>
+
+          {/* --- INYECCIÓN DE LA VENTANA EMERGENTE PARA EL GRAFICO (MODAL) --- */}
+          {modalAbierto && (
+            <PaginaReportes onClose={() => setModalAbierto(false)} />
+          )}
+        </div>
         {/* Contenedor de Buscador y Filtro Desplegable */}
         <div className="search-field">
           {/* Buscador */}
