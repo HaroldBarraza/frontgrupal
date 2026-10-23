@@ -44,7 +44,7 @@ export default function GraficaCategoria(props: { datos: DataGrafica[] }) {
           <Legend />
 
           {/* 5. Eliminamos la barra 'x' (no existe en tus datos) y corregimos 'total' a minúscula */}
-          <Bar dataKey="total" fill="#4f46e5" radius={[10, 10, 0, 0]} />
+          <Bar dataKey="total" fill="#fa9183" radius={[10, 10, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
